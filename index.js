@@ -107,10 +107,18 @@ app.get('/users',async (req, res) => {
     res.status(200).json({ data: find });
   });
 
+// validator
+app.post('/validate',async(req,res)=>{
+  const data = await User.create({ 
+    firstName: "Jane",
+    lastName:"kumar"
+   });
+   res.status(200).json({ data: data });
 
+});
 
 
   
 app.listen(3000, () => {
-    console.log("app will run on 3000");
+    console.log("app will run on 2333");
   });
