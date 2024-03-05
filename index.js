@@ -1,11 +1,20 @@
 const express = require("express");
-var bodyParser = require("body-parser");
+const bodyParser = require("body-parser");
+const multer=require("multer");
 const app = express();
 // require('./models');
 app.use(bodyParser.json());
-const { User, Contact } = require("./models");
+const { User, Contact,File } = require("./models");
 
-
+const storage=multer.diskStorage({
+  destination:(req,file, cb)=>{ 
+    cb(null,"uploads");
+  },
+  filename:(req,file,cb)=>{
+    cb(null,file.originalname)
+  }
+});
+const upload=multer({storage});
 app.get("/", function (req, res) {
   res.send("Hello World");
 });
@@ -59,7 +68,7 @@ app.get('/users',async (req, res) => {
   const find = await Contact.findAll({});
   res.status(200).json({ data: find });
 });
-//get perticular contact with id
+  //get perticular contact with id
   app.get ('/contacts/:id',async (req, res) => {
     const find = await Contact.findOne({
       where: {
@@ -106,7 +115,6 @@ app.get('/users',async (req, res) => {
     });
     res.status(200).json({ data: find });
   });
-
 // validator
 app.post('/validate',async(req,res)=>{
   const data = await User.create({ 
@@ -116,9 +124,32 @@ app.post('/validate',async(req,res)=>{
    res.status(200).json({ data: data });
 
 });
-
-
-  
+// for uploading an image 
+app.post("/upload",upload.single("file"),async(req,res)=>{
+  const{originalname ,path}=req.file;
+  await File.create({filename:originalname,path})
+  .then(()=>{
+    res.send("File uploaded successfully");
+  })
+  .catch(er=>{
+    res.status(500).send("Error uplaoding file");
+  });
+});
+// route for fetching the file 
+app.get("/file/:id",(req,res)=>{
+  const fileId=req.params.id;
+  File.findByPk(fileId)
+  .then(file =>{
+    if(!file){
+      return res.status(404).send("file not found");
+    }
+    res.download(file.path);
+  })
+  .catch(e=>{
+    res.status(500).send("error fetching the file");
+  });
+});
+// listening 
 app.listen(3000, () => {
     console.log("app will run on 2333");
-  });
+});
